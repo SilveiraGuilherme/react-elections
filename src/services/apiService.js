@@ -1,28 +1,40 @@
-import { create, edit, exclude, read } from './httpService';
+import { read } from './httpService';
 
-export async function getAllCities() {
-  const allCities = await read('/cities').map(city => [city.name]);
-  console.log(allCities);
-  return allCities;
+export async function getCities() {
+  const cities = await read('/cities');
+  cities.sort((a, b) => a.name.localeCompare(b.name));
+  return cities;
 }
 
-export async function apiDeleteFlashCard(cardId) {
-  await exclude(`/flashcards/${cardId}`);
+export async function getCandidates() {
+  const candidates = await read('/candidates');
+  return candidates;
 }
 
-export async function apiCreateFlashCard(id, title, description) {
-  const newFlashCard = await create('/flashcards', {
-    id,
-    title,
-    description,
-  });
-  return newFlashCard;
-}
+export async function getElectionData(cityId) {
+  const [rawElectionData, cityData, candidates] = await Promise.all([
+    read(`/election?cityId=${cityId}`),
+    read(`/cities?id=${cityId}`),
+    getCandidates(),
+  ]);
 
-export async function apiUpdateFlashCard(cardId, title, description) {
-  const updatedFlashCard = await edit(`/flashcards/${cardId}`, {
-    title,
-    description,
-  });
-  return updatedFlashCard;
+  const { name: cityName, votingPopulation, absence, presence } = cityData[0];
+
+  const optimizedElectionData = rawElectionData
+    .map(electionItem => {
+      const { id, candidateId, votes } = electionItem;
+
+      const { name: candidateName, username } = candidates.find(
+        candidate => candidate.id === candidateId
+      );
+
+      return { id, candidateName, username, votes };
+    })
+    .sort((a, b) => b.votes - a.votes);
+
+  const electionData = {
+    city: { cityName, votingPopulation, absence, presence },
+    electionResults: optimizedElectionData,
+  };
+  return electionData;
 }

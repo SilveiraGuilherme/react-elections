@@ -1,9 +1,9 @@
 import Header from '../components/Header';
 import Main from '../components/Main';
-import { getAllCities } from '../services/apiService';
+import { getElectionData } from '../services/apiService';
 
 export default function ElectionsPage() {
-  getAllCities();
+  getElectionData('d2dab6a2-3029-45a5-89f2-fcbaee387758');
 
   return (
     <div>
