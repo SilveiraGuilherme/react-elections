@@ -1,17 +1,17 @@
 import { read } from './httpService';
 
-export async function getCities() {
+async function getCities() {
   const cities = await read('/cities');
   cities.sort((a, b) => a.name.localeCompare(b.name));
   return cities;
 }
 
-export async function getCandidates() {
+async function getCandidates() {
   const candidates = await read('/candidates');
   return candidates;
 }
 
-export async function getElectionData(cityId) {
+async function getElectionData(cityId) {
   const [rawElectionData, cityData, candidates] = await Promise.all([
     read(`/election?cityId=${cityId}`),
     read(`/cities?id=${cityId}`),
@@ -28,9 +28,14 @@ export async function getElectionData(cityId) {
         candidate => candidate.id === candidateId
       );
 
-      return { id, candidateName, username, votes };
+      const votesPercentage = ((votes / presence) * 100).toFixed(2);
+
+      return { id, candidateName, username, votes, votesPercentage };
     })
-    .sort((a, b) => b.votes - a.votes);
+    .sort((a, b) => b.votes - a.votes)
+    .map((item, index) => {
+      return { ...item, isElected: index === 0 };
+    });
 
   const electionData = {
     city: { cityName, votingPopulation, absence, presence },
@@ -38,3 +43,5 @@ export async function getElectionData(cityId) {
   };
   return electionData;
 }
+
+export { getCities, getElectionData };

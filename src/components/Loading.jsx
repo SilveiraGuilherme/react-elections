@@ -1,5 +1,9 @@
 import { ClipLoader } from 'react-spinners';
 
 export default function Loading() {
-  return <ClipLoader />;
+  return (
+    <div className="flex justify-center">
+      <ClipLoader />
+    </div>
+  );
 }
