@@ -1,5 +1,7 @@
 import { read } from './httpService';
 
+const cache = {};
+
 async function getCities() {
   const cities = await read('/cities');
   cities.sort((a, b) => a.name.localeCompare(b.name));
@@ -12,6 +14,9 @@ async function getCandidates() {
 }
 
 async function getElectionData(cityId) {
+  if (cache[cityId]) {
+    return cache[cityId];
+  }
   const [rawElectionData, cityData, candidates] = await Promise.all([
     read(`/election?cityId=${cityId}`),
     read(`/cities?id=${cityId}`),
@@ -28,7 +33,7 @@ async function getElectionData(cityId) {
         candidate => candidate.id === candidateId
       );
 
-      const votesPercentage = ((votes / presence) * 100).toFixed(2);
+      const votesPercentage = (votes / presence) * 100;
 
       return { id, candidateName, username, votes, votesPercentage };
     })
@@ -41,6 +46,9 @@ async function getElectionData(cityId) {
     city: { cityName, votingPopulation, absence, presence },
     electionResults: optimizedElectionData,
   };
+
+  cache[cityId] = electionData;
+
   return electionData;
 }
 
